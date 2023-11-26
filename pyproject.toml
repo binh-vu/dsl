@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "dsl"
+version = "1.0.0-alpha.0"
+description = "An implementation of Semantic labeling: A domain-independent approach"
+authors = ["Binh Vu <binh@toan2.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/binh-vu/dsl"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+sem-desc = "^5.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
