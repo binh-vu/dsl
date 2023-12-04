@@ -1,245 +1,269 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from collections import defaultdict, Counter
-from itertools import chain
-from multiprocessing.pool import Pool
-from pathlib import Path
-from typing import Dict, Sequence, Tuple, List
+from __future__ import annotations
+
+from collections import Counter, defaultdict
+from functools import lru_cache
+from typing import Mapping, Optional, Sequence
 
 import numpy
-from sm.dataset import Example, FullTable
+from tqdm.auto import tqdm
 
-from dsl.column import Column
-from dsl.feature_extraction.column_base import numeric, textual, column_name
-from sm.outputs.semantic_model import SemanticModel
-from sm.inputs.table import ColumnBasedTable
-from loguru import logger
-import serde.pickle
+from dsl.config import DSLConfig
+from dsl.feature_extraction.column_base import column_name, numeric, textual
+from dsl.input import DSLColumn, DSLSemanticType, DSLTable
+from kgdata.models.ont_class import OntologyClass
+from kgdata.models.ont_property import OntologyProperty
+from sm.dataset import Example, FullTable, sample_table_data
+from sm.misc.ray_helper import ray_map, ray_put
+from sm.outputs.semantic_model import SemanticType
+
 
 class SemanticTypeDB(object):
-
     SIMILARITY_METRICS = [
-        "label_jaccard", "stype_jaccard", "num_ks_test", "num_mann_whitney_u_test", "num_jaccard", "text_jaccard", "text_tf-idf"
+        "label_jaccard",
+        "stype_jaccard",
+        "num_ks_test",
+        "num_mann_whitney_u_test",
+        "num_jaccard",
+        "text_jaccard",
+        "text_tf-idf",
     ]
     instance = None
 
-    def __init__(self, dataset: str, examples: list[Example[FullTable]], train_tables: Sequence[ColumnBasedTable], test_tables: List[ColumnBasedTable]):
-        self.dataset = dataset
-        self.examples = examples
-        self.train_tables: Sequence[ColumnBasedTable] = train_tables
-        self.test_tables = test_tables
+    def __init__(
+        self,
+        train_examples: Sequence[Example[DSLTable]],
+        classes: Mapping[str, OntologyClass],
+        props: Mapping[str, OntologyProperty],
+    ):
+        self.train_examples: Sequence[Example[DSLTable]] = train_examples
+        self.train_columns: list[DSLColumn] = []
+        self.col2types: dict[str, SemanticType] = {}
 
-        self.similarity_matrix: numpy.ndarray = None
-        self.tfidf_db: TfidfDatabase = None
-        self._init()
+        for ex in self.train_examples:
+            for ci, col in enumerate(ex.table.table.columns):
+                col_id = ex.table.columns[col.index].id
+                stypes = set()
+                for sm in ex.sms:
+                    if sm.has_data_node(col.index):
+                        stypes.update(sm.get_semantic_types_of_column(col.index))
 
-    def _init(self):
-        self.source_mappings: Dict[str, Example[FullTable]] = {ex.table.table.table_id: ex for ex in self.examples}
-        self.train_columns = [col for tbl in self.train_tables for col in tbl.columns]
-        self.train_column_stypes: List[str] = []
-        for tbl in self.train_tables:
-            sm, = self.source_mappings[tbl.id].sms
-            for col in tbl.columns:
-                dnode = sm.get_data_node(col.id)sm.graph.get_node_by_id(sm.get_attr_by_label(col.name).id)
-                dlink = dnode.get_first_incoming_link()
-                self.train_column_stypes.append(dlink.label.decode("utf-8"))
+                if len(stypes) == 0:
+                    continue
+                elif len(stypes) > 1:
+                    raise Exception(
+                        f"column {col_id} should have only one semantic type"
+                    )
 
-        self.test_columns = [col for tbl in self.test_tables for col in tbl.columns]
-        self.name2table: Dict[str, ColumnBasedTable] = {
-            tbl.id: tbl for tbl in chain(self.train_tables, self.test_tables)
-        }
-        self.col2idx: Dict[str, int] = {col.id: i for i, col in enumerate(chain(self.train_columns, self.test_columns))}
-        self.col2types: Dict[str, Tuple[str, str]] = {}
-        self.col2dnodes: Dict[str, GraphNode] = {}
+                assert col_id not in self.col2types, "column id must be unique"
+                self.col2types[col_id] = list(stypes)[0]
+                self.train_columns.append(ex.table.columns[ci])
 
-        col: Column
-        for col in chain(self.train_columns, self.test_columns):
-            sm = self.source_mappings[col.table_name]
-            attr = sm.get_attr_by_label(col.name)
-            dnode = sm.graph.get_node_by_id(attr.id)
-            link = dnode.get_first_incoming_link()
-            self.col2types[col.id] = (link.get_source_node().label, link.label)
-            self.col2dnodes[col.id] = dnode
+        self.col2idx = {col.id: idx for idx, col in enumerate(self.train_columns)}
+        self.train_column_stypes = [
+            DSLSemanticType(
+                stype,
+                classes[stype.class_abs_uri].label
+                + " | "
+                + props[stype.predicate_abs_uri].label,
+            )
+            for stype in (self.col2types[col.id] for col in self.train_columns)
+        ]
 
-        assert len(self.col2types) == len(self.train_columns) + len(self.test_columns), "column name must be unique"
+        self.tfidf_db = TfidfDatabase.create(
+            textual.get_tokenizer(),
+            self.train_columns,
+        )
 
-    @staticmethod
-    def create(dataset: str, train_source_ids: List[str]) -> 'SemanticTypeDB':
-        tables = get_sampled_data_tables(dataset)
-        train_source_ids = set(train_source_ids)
-
-        train_tables = [ColumnBasedTable.from_table(tbl) for tbl in tables if tbl.id in train_source_ids]
-        test_tables = [ColumnBasedTable.from_table(tbl) for tbl in tables if tbl.id not in train_source_ids]
-
-        return SemanticTypeDB(dataset, train_tables, test_tables)
-
-    @staticmethod
-    def get_stype_db(dataset: str, train_source_ids: List[str], cache_dir: Path) -> 'SemanticTypeDB':
-        if SemanticTypeDB.instance is None:
-            cache_file = cache_dir / 'stype_db.pkl'
-            if cache_file.exists():
-                logger.debug("Load SemanticTypeDB from cache file...")
-                stype_db: SemanticTypeDB = deserialize(cache_file)
-                if set(train_source_ids) != {tbl.id for tbl in stype_db.train_tables} or stype_db.dataset != dataset:
-                    stype_db = None
-            else:
-                stype_db = None
-
-            if stype_db is None:
-                logger.debug("Have to re-create SemanticTypeDB...")
-                stype_db = SemanticTypeDB.create(dataset, train_source_ids)
-                stype_db._build_db()
-                serde.pickle.ser(stype_db, cache_file)
-
-            SemanticTypeDB.instance = stype_db
-
-        return SemanticTypeDB.instance
-
-    def get_table_by_name(self, name: str) -> ColumnBasedTable:
-        return self.name2table[name]
-
-    def _build_db(self) -> None:
-        """Build semantic types database from scratch"""
+    def get_similarity_matrix(
+        self, columns: list[DSLColumn], verbose: bool = False
+    ) -> numpy.ndarray:
         n_train_columns = len(self.train_columns)
-
-        logger.debug("Build tfidf database...")
-        self.similarity_matrix = numpy.zeros(
-            (n_train_columns + len(self.test_columns), n_train_columns, len(self.SIMILARITY_METRICS)), dtype=float)
-        self.tfidf_db = TfidfDatabase.create(textual.get_tokenizer(), self.train_columns)
-
-        logger.debug("Pre-build tf-idf for all columns")
-        self.tfidf_db.cache_tfidf(self.test_columns)
-        logger.debug("Computing similarity matrix...")
+        similarity_matrix = numpy.zeros(
+            (
+                len(columns),
+                n_train_columns,
+                len(self.SIMILARITY_METRICS),
+            ),
+            dtype=float,
+        )
 
         # loop through train source ids and compute similarity between columns
-        for idx, col in enumerate(self.train_columns):
-            logger.trace("   + working on col: %s", col.id)
-            sim_features = self._compute_feature_vectors(col, self.train_columns, self.train_column_stypes)
-            self.similarity_matrix[idx, :, :] = numpy.asarray(sim_features).reshape((n_train_columns, -1))
+        for idx, col in tqdm(
+            enumerate(columns),
+            desc="Compute similarity matrix",
+            total=len(columns),
+            disable=not verbose,
+        ):
+            sim_features = self._compute_feature_vectors(
+                col, self.train_columns, self.train_column_stypes
+            )
+            similarity_matrix[idx, :, :] = numpy.asarray(sim_features).reshape(
+                (n_train_columns, -1)
+            )
 
-        for idx, col in enumerate(self.test_columns):
-            logger.trace("   + working on col: %s", col.id)
-            sim_features = self._compute_feature_vectors(col, self.train_columns, self.train_column_stypes)
-            self.similarity_matrix[idx + n_train_columns, :, :] = numpy.asarray(sim_features).reshape((n_train_columns,
-                                                                                                       -1))
+        return similarity_matrix
 
-    def _compute_feature_vectors(self, col: Column, refcols: List[Column], refcol_stypes: List[str]):
+    def _compute_feature_vectors(
+        self,
+        col: DSLColumn,
+        refcols: list[DSLColumn],
+        refcol_stypes: list[DSLSemanticType],
+    ):
+        ref_tfidfs = self.tfidf_db.compute_tfidf(refcols)
+        col_tfidf = self.tfidf_db.compute_tfidf([col])[0]
+
         features = []
         for i, refcol in enumerate(refcols):
-            features.append([
-                # name features
-                column_name.jaccard_sim_test(refcol.name, col.name, lower=True),
-                column_name.jaccard_sim_test(refcol_stypes[i], col.name, lower=True),
-                # numeric features
-                numeric.ks_test(refcol, col),
-                numeric.mann_whitney_u_test(refcol, col),
-                numeric.jaccard_sim_test(refcol, col),
-                # text features
-                textual.jaccard_sim_test(refcol, col),
-                textual.cosine_similarity(self.tfidf_db.compute_tfidf(refcol), self.tfidf_db.compute_tfidf(col)),
-            ])
+            features.append(
+                [
+                    # name features
+                    column_name.jaccard_sim_test(
+                        refcol.col_name, col.col_name, lower=True
+                    ),
+                    column_name.jaccard_sim_test(
+                        refcol_stypes[i].label, col.col_name, lower=True
+                    ),
+                    # numeric features
+                    numeric.ks_test(refcol, col),
+                    numeric.mann_whitney_u_test(refcol, col),
+                    numeric.jaccard_sim_test(refcol, col),
+                    # text features
+                    textual.jaccard_sim_test(refcol, col),
+                    textual.cosine_similarity(
+                        ref_tfidfs[i],
+                        col_tfidf,
+                    ),
+                ]
+            )
 
         return features
 
-    # implement pickling
-    def __getstate__(self):
-        return self.dataset, self.train_tables, self.test_tables, self.similarity_matrix
-
-    def __setstate__(self, state):
-        self.dataset = state[0]
-        self.train_tables = state[1]
-        self.test_tables = state[2]
-        self.similarity_matrix = state[3]
-        self._init()
-
 
 class TfidfDatabase(object):
-
-    logger = get_logger('app.semantic_labeling.tfidf_db')
-
-    def __init__(self, tokenizer, vocab: Dict[str, int], invert_token_idx: Dict[str, int],
-                 col2tfidf: Dict[str, numpy.ndarray]) -> None:
+    def __init__(
+        self,
+        tokenizer: textual.DSLTokenizer,
+        vocab: dict[str, int],
+        inverse_doc_freq: dict[str, int],
+        col2tfidf: dict[str, numpy.ndarray],
+    ) -> None:
         self.vocab = vocab
-        self.invert_token_idx = invert_token_idx
+        self.inverse_doc_freq = inverse_doc_freq
         self.tokenizer = tokenizer
         self.n_docs = len(col2tfidf)
         self.cache_col2tfidf = col2tfidf
 
     @staticmethod
-    def create(tokenizer, columns: List[Column]) -> 'TfidfDatabase':
-        vocab = {}
-        invert_token_idx: Dict[str, int] = defaultdict(lambda: 0)
-        col2tfidf = {}
-        token_count = defaultdict(lambda: 0)
-        n_docs = len(columns)
+    def create(
+        tokenizer: textual.DSLTokenizer, train_columns: list[DSLColumn]
+    ) -> TfidfDatabase:
+        tfidf_cols, vocab, inverse_doc_freq = TfidfDatabase._compute_tfidf(
+            tokenizer,
+            train_columns,
+            len(train_columns),
+            vocab=None,
+            inverse_doc_freq=None,
+            vocab_min_word_doc_count=0,
+            vocab_ignore_number_min_doc_count=2,
+        )
+        return TfidfDatabase(
+            tokenizer,
+            vocab,
+            inverse_doc_freq,
+            {col.id: tfidf for col, tfidf in zip(train_columns, tfidf_cols)},
+        )
+
+    def compute_tfidf(
+        self, cols: list[DSLColumn], cache: bool = False
+    ) -> list[numpy.ndarray]:
+        unk_cols = [col for col in cols if col.id not in self.cache_col2tfidf]
+        unk_tfidf_cols, _, _ = TfidfDatabase._compute_tfidf(
+            self.tokenizer, unk_cols, self.n_docs, self.vocab, self.inverse_doc_freq
+        )
+        unk_out = {col.id: tfidf for col, tfidf in zip(unk_cols, unk_tfidf_cols)}
+
+        if cache:
+            self.cache_col2tfidf.update(unk_out)
+
+        return [
+            self.cache_col2tfidf[col.id]
+            if col.id in self.cache_col2tfidf
+            else unk_out[col.id]
+            for col in cols
+        ]
+
+    @staticmethod
+    def _compute_tfidf(
+        tokenizer: textual.DSLTokenizer,
+        columns: list[DSLColumn],
+        n_docs: int,
+        vocab: Optional[dict[str, int]] = None,
+        inverse_doc_freq: Optional[dict[str, int]] = None,
+        vocab_min_word_doc_count: int = 0,
+        vocab_ignore_number_min_doc_count: int = 2,
+    ) -> tuple[list[numpy.ndarray], dict[str, int], dict[str, int]]:
+        """Compute TF-IDF for a list of columns. If the vocab is not provided,
+        the columns will be treated as the training data and the vocab and invert_doc_freq
+        will be computed.
+        """
+        using_ray = len(columns) > 1
 
         # compute tf first
-        with Pool() as p:
-            tf_cols = p.map(TfidfDatabase._compute_tf, [(tokenizer, col) for col in columns])
+        tokenizer_ref = ray_put(tokenizer, using_ray=using_ray)
+        tf_cols = ray_map(
+            TfidfDatabase._compute_tf,
+            [(tokenizer_ref, col) for col in columns],
+            is_func_remote=False,
+            using_ray=using_ray,
+        )
 
-        # then compute vocabulary & preparing for idf
+        # if the vocab isn't provided, columns will be treated as the training data
+        if vocab is None:
+            # compute inverse_doc_freq
+            inverse_doc_freq = defaultdict(lambda: 0)
+            for tf_col in tf_cols:
+                for w in tf_col:
+                    inverse_doc_freq[w] += 1
+
+            # build vocab
+            vocab = {}
+            for w in list(inverse_doc_freq.keys()):
+                wc = inverse_doc_freq[w]
+                should_ignore = wc < vocab_min_word_doc_count or (
+                    wc < vocab_ignore_number_min_doc_count and w.isdigit()
+                )
+                if should_ignore:
+                    # delete this word
+                    del inverse_doc_freq[w]
+                else:
+                    vocab[w] = len(vocab)
+        else:
+            assert inverse_doc_freq is not None
+
+        out = []
         for tf_col in tf_cols:
-            for w in tf_col:
-                invert_token_idx[w] += 1
-                token_count[w] += 1
-
-        # reduce vocab size
-        for w in token_count:
-            if token_count[w] < 2 and w.isdigit():
-                # delete this word
-                del invert_token_idx[w]
-            else:
-                vocab[w] = len(vocab)
-
-        # revisit it and make tfidf
-        for col, tf_col in zip(columns, tf_cols):
             tfidf = numpy.zeros((len(vocab)))
             for w, tf in tf_col.items():
                 if w in vocab:
-                    tfidf[vocab[w]] = tf * numpy.log(n_docs / (1 + invert_token_idx[w]))
-            col2tfidf[col.id] = tfidf
-
-        return TfidfDatabase(tokenizer, vocab, invert_token_idx, col2tfidf)
-
-    def compute_tfidf(self, col: Column):
-        if col.id in self.cache_col2tfidf:
-            return self.cache_col2tfidf[col.id]
-
-        tfidf = numpy.zeros(len(self.vocab))
-        for w, tf in self._compute_tf((self.tokenizer, col)).items():
-            if w in self.vocab:
-                print(w, tf, self.invert_token_idx[w], numpy.log(self.n_docs / (1 + self.invert_token_idx[w])))
-                tfidf[self.vocab[w]] = tf * numpy.log(self.n_docs / (1 + self.invert_token_idx[w]))
-
-        return tfidf
-
-    def  cache_tfidf(self, cols: List[Column]):
-        cols = [col for col in cols if col.id not in self.cache_col2tfidf]
-
-        with Pool() as p:
-            tf_cols = p.map(TfidfDatabase._compute_tf, [(self.tokenizer, col) for col in cols])
-
-        for col, tf_col in zip(cols, tf_cols):
-            tfidf = numpy.zeros(len(self.vocab))
-            for w, tf in tf_col.items():
-                if w in self.vocab:
-                    tfidf[self.vocab[w]] = tf * numpy.log(self.n_docs / (1 + self.invert_token_idx[w]))
-            self.cache_col2tfidf[col.id] = tfidf
+                    tfidf[vocab[w]] = tf * numpy.log(n_docs / (1 + inverse_doc_freq[w]))
+            out.append(tfidf)
+        return out, vocab, inverse_doc_freq
 
     @staticmethod
-    def _compute_tf(args):
-        tokenizer, col = args
+    def _compute_tf(
+        tokenizer: textual.DSLTokenizer, col: DSLColumn
+    ) -> dict[str, float]:
         counter = Counter()
-        sents = (subsent for sent in col.get_textual_data() for subsent in sent.decode('utf-8').split("/"))
-        for doc in tokenizer.pipe(sents, batch_size=50, n_threads=4):
+        sents = (
+            subsent for sent in col.get_textual_data() for subsent in sent.split("/")
+        )
+        for doc in tokenizer.tokenize(sents):
             counter.update((str(w) for w in doc))
 
         number_of_token = sum(counter.values())
+        new_counter = {}
         for token, val in counter.items():
-            counter[token] = val / number_of_token
-        return counter
-
-
-if __name__ == '__main__':
-    stype_db = SemanticTypeDB.create("museum_edm", [sm.id for sm in get_semantic_models("museum_edm")[:14]])
-    stype_db._build_db()
+            new_counter[token] = val / number_of_token
+        return new_counter

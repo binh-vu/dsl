@@ -1,19 +1,32 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import re
-from typing import Dict, Tuple, List, Union, Optional, Callable
 
-from spacy.lang.en import English
-from spacy.tokenizer import Tokenizer
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Generator, Iterable, cast
 
 import numpy
 from numpy.core.multiarray import dot
 from numpy.linalg import norm
+from spacy.lang.en import English, EnglishDefaults
+from spacy.tokenizer import Tokenizer
 
-from semantic_labeling.column import Column
+from dsl.input import DSLColumn
 
 
-def jaccard_sim_test(col1: Column, col2: Column):
+@dataclass
+class DSLTokenizer:
+    tokenizer: Tokenizer
+
+    def tokenize(
+        self, sentences: Iterable[str]
+    ) -> Generator[Iterable[str], None, None]:
+        for doc in self.tokenizer.pipe(sentences, batch_size=50):
+            yield (str(w) for w in doc)
+
+
+def jaccard_sim_test(col1: DSLColumn, col2: DSLColumn):
     col1data = set(col1.get_textual_data())
     col2data = set(col2.get_textual_data())
 
@@ -32,10 +45,16 @@ def cosine_similarity(vec1: numpy.ndarray, vec2: numpy.ndarray) -> float:
     return dot(vec1, vec2) / (norm1 * norm2)
 
 
-def get_tokenizer() -> Tokenizer:
-    infixes = [
-        '(?<=[0-9A-Za-z])[\\.](?=[0-9])',
-        '(?<=[0-9])[\\.](?=[0-9A-Za-z])',
+class CustomizedEnglishDefaults(EnglishDefaults):
+    infixes = cast(list[str], EnglishDefaults.infixes) + [
+        "(?<=[0-9A-Za-z])[\\.](?=[0-9])",
+        "(?<=[0-9])[\\.](?=[0-9A-Za-z])",
     ]
-    English.Defaults.infixes = tuple(list(English.Defaults.infixes) + infixes)
-    return English.Defaults.create_tokenizer()
+
+
+class CustomizedEnglish(English):
+    Defaults = CustomizedEnglishDefaults
+
+
+def get_tokenizer() -> DSLTokenizer:
+    return DSLTokenizer(CustomizedEnglish().tokenizer)
