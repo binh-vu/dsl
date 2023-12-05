@@ -15,7 +15,11 @@ from tqdm.auto import tqdm
 
 import serde.pickle
 from dsl.config import DSLConfig
-from dsl.generate_train_data import generate_training_data
+from dsl.generate_train_data import (
+    DefaultSemanticTypeComparator,
+    ISemanticTypeComparator,
+    generate_training_data,
+)
 from dsl.input import DSLTable
 from dsl.sm_type_db import SemanticTypeDB
 from kgdata.models.ont_class import OntologyClass
@@ -43,6 +47,8 @@ class DSLPredictionHierarchy(DSLPrediction):
 
 
 class DSL(object):
+    VERSION = 101
+
     instance = None
 
     def __init__(
@@ -57,6 +63,8 @@ class DSL(object):
         self.exec_dir.mkdir(exist_ok=True, parents=True)
 
         self.model: Optional[DSLModel] = None
+        self.classes = classes
+        self.props = props
 
         if (exec_dir / "stype_db.pkl").exists():
             self.stype_db = serde.pickle.deser(exec_dir / "stype_db.pkl")
@@ -83,9 +91,13 @@ class DSL(object):
         logger.error("Cannot load model...")
         raise Exception("Model doesn't exist..")
 
-    def train_model(self):
+    def train_model(self, stype_cmp: Optional[ISemanticTypeComparator] = None):
         """Train a model and save it to disk"""
-        x_train, y_train, _xy_testsets = generate_training_data(self.stype_db, {})
+        if stype_cmp is None:
+            stype_cmp = DefaultSemanticTypeComparator(self.classes, self.props)
+        x_train, y_train, _xy_testsets = generate_training_data(
+            self.stype_db, stype_cmp, {}
+        )
 
         # clf = LogisticRegression(class_weight="balanced")
         clf = RandomForestClassifier(
