@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "dsl"
+name = "dsl2"
 version = "1.0.1"
 description = "An implementation of Semantic labeling: A domain-independent approach"
 authors = ["Binh Vu <binh@toan2.com>"]
