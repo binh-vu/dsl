@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Mapping, Optional, Protocol, Sequence
 
 import numpy as np
+import pandas as pd
 from loguru import logger
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
@@ -47,7 +48,7 @@ class DSLPredictionHierarchy(DSLPrediction):
 
 
 class DSL(object):
-    VERSION = 101
+    VERSION = 103
 
     instance = None
 
@@ -71,7 +72,12 @@ class DSL(object):
         else:
             self.stype_db = SemanticTypeDB(train_examples, classes, props)
 
-    def get_model(self, train_if_not_exist: bool = True) -> DSLModel:
+    def get_model(
+        self,
+        train_if_not_exist: bool = True,
+        stype_cmp: Optional[ISemanticTypeComparator] = None,
+        save_train_data: bool = False,
+    ) -> DSLModel:
         """Try to load previous model if possible"""
         if self.model is not None:
             return self.model
@@ -84,19 +90,23 @@ class DSL(object):
             return model
 
         if train_if_not_exist:
-            self.train_model()
+            self.train_model(stype_cmp, save_train_data)
             assert self.model is not None
             return self.model
 
         logger.error("Cannot load model...")
         raise Exception("Model doesn't exist..")
 
-    def train_model(self, stype_cmp: Optional[ISemanticTypeComparator] = None):
+    def train_model(
+        self,
+        stype_cmp: Optional[ISemanticTypeComparator] = None,
+        save_train_data: bool = False,
+    ):
         """Train a model and save it to disk"""
         if stype_cmp is None:
             stype_cmp = DefaultSemanticTypeComparator(self.classes, self.props)
-        x_train, y_train, _xy_testsets = generate_training_data(
-            self.stype_db, stype_cmp, {}
+        trainset, testsets = generate_training_data(
+            self.stype_db, stype_cmp, {}, include_traceback=save_train_data
         )
 
         # clf = LogisticRegression(class_weight="balanced")
@@ -104,11 +114,22 @@ class DSL(object):
             n_estimators=200, max_depth=10, class_weight="balanced", random_state=120
         )
 
-        clf = clf.fit(x_train, y_train)
+        clf = clf.fit(trainset["x"], trainset["y"])
 
-        y_pred = clf.predict_proba(x_train)[:, 1]
+        y_pred = clf.predict_proba(trainset["x"])[:, 1]
         logger.debug("Performance:")
-        print(classification_report(y_train, y_pred >= 0.5))
+        print(classification_report(trainset["y"], y_pred >= 0.5))
+
+        if save_train_data:
+            data = {
+                "refcol": trainset["refcol"],
+                "col": trainset["col"],
+                "y": trainset["y"],
+                "y_pred": y_pred,
+            }
+            for i in range(len(trainset["x"][0])):
+                data[f"feat{i}"] = [x[i] for x in trainset["x"]]
+            pd.DataFrame(data).to_csv(self.exec_dir / "trainset.csv", index=False)
 
         logger.debug("Save model...")
         serde.pickle.ser(clf, self.exec_dir / "model.pkl")

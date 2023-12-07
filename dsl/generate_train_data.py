@@ -56,14 +56,18 @@ def generate_training_data(
     stype_db: SemanticTypeDB,
     stype_cmp: ISemanticTypeComparator,
     testsets: dict[str, list[tuple[DSLColumn, SemanticType]]],
-) -> tuple[list, list, dict[str, tuple[list, list]]]:
-    x_train, y_train = [], []
+    include_traceback: bool,
+) -> tuple[dict, dict[str, dict]]:
+    trainset = {"x": [], "y": [], "refcol": [], "col": []}
 
     train_sim_matrix = stype_db.get_similarity_matrix(
         stype_db.train_columns, verbose=True
     )
 
-    testset_output = {test_name: ([], []) for test_name in testsets.keys()}
+    testset_output = {
+        test_name: {"x": [], "y": [], "relcol": [], "col": []}
+        for test_name in testsets.keys()
+    }
     testset_matrix = {
         test_name: stype_db.get_similarity_matrix(
             [xy[0] for xy in test_columns], verbose=True
@@ -75,20 +79,30 @@ def generate_training_data(
         for j, col in enumerate(stype_db.train_columns):
             if i == j:
                 continue
-            x_train.append(train_sim_matrix[j, i])
-            y_train.append(
+            trainset["x"].append(train_sim_matrix[j, i])
+            trainset["y"].append(
                 stype_cmp(stype_db.col2types[ref_col.id], stype_db.col2types[col.id])
             )
 
+            if include_traceback:
+                trainset["refcol"].append(ref_col.id)
+                trainset["col"].append(col.id)
+
         for test_name, test_columns in testsets.items():
-            x_test, y_test = testset_output[test_name]
+            xy_test = testset_output[test_name]
             test_sim_matrix = testset_matrix[test_name]
 
             for j, (col, col_stype) in enumerate(test_columns):
-                x_test.append(test_sim_matrix[j, i])
-                y_test.append(stype_cmp(stype_db.col2types[ref_col.id], col_stype))
+                xy_test["x"].append(test_sim_matrix[j, i])
+                xy_test["y"].append(
+                    stype_cmp(stype_db.col2types[ref_col.id], col_stype)
+                )
 
-    if len(x_train) == 0:
+                if include_traceback:
+                    xy_test["refcol"].append(ref_col.id)
+                    xy_test["col"].append(col.id)
+
+    if len(trainset) == 0:
         raise Exception("No training data")
 
-    return x_train, y_train, testset_output
+    return trainset, testset_output
