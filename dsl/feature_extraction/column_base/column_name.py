@@ -14,6 +14,9 @@ def jaccard_sim_test(col1_name: str, col2_name: str, lower: bool = False) -> flo
         lbl1 = set(tokenize_label(col1_name))
         lbl2 = set(tokenize_label(col2_name))
 
+    if len(lbl1) == 0 and len(lbl2) == 0:
+        return 1.0
+
     return len(lbl1.intersection(lbl2)) / len(lbl1.union(lbl2))
 
 

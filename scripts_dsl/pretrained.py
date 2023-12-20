@@ -44,3 +44,4 @@ dsl = DSL(
     DynItem(True),
     DynItem(False),
 )
+dsl.get_model()
