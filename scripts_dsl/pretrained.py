@@ -44,4 +44,17 @@ dsl = DSL(
     DynItem(True),
     DynItem(False),
 )
+
+"""
+Performance:
+
+              precision    recall  f1-score   support
+
+           0       0.99      0.94      0.97    128706
+           1       0.34      0.85      0.49      4884
+
+    accuracy                           0.94    133590
+   macro avg       0.67      0.89      0.73    133590
+weighted avg       0.97      0.94      0.95    133590
+"""
 dsl.get_model()
