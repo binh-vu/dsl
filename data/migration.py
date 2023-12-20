@@ -243,6 +243,7 @@ class Column:
 def save_source(source: Source, outdir: Path):
     (outdir / "tables").mkdir(exist_ok=True)
     data = {
+        "version": 2,
         "table": {
             "version": 2,
             "table_id": outdir.name + "__" + source.name,
@@ -311,7 +312,7 @@ def save_description(source: Source, outdir: Path):
         )
     (outdir / "descriptions").mkdir(exist_ok=True)
     (outdir / "descriptions" / f"{source.name}.json").write_text(
-        json.dumps([sm.to_dict()])
+        json.dumps([sm.to_dict()], indent=2)
     )
 
 

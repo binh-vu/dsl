@@ -1,1 +1,44 @@
-[{"version": 1, "nodes": [{"col_index": 1, "label": "name", "id": 0}, {"abs_uri": "http://www.americanartcollaborative.org/ontology/Person", "rel_uri": "http://www.americanartcollaborative.org/ontology/Person", "approximation": false, "readable_label": null, "id": 1}, {"col_index": 2, "label": "biography", "id": 2}], "edges": [{"source": 1, "target": 0, "abs_uri": "http://rdvocab.info/ElementsGr2/nameOfThePerson", "rel_uri": "http://rdvocab.info/ElementsGr2/nameOfThePerson", "approximation": false, "readable_label": null, "id": 0}, {"source": 1, "target": 2, "abs_uri": "http://rdvocab.info/ElementsGr2/biographicalInformation", "rel_uri": "http://rdvocab.info/ElementsGr2/biographicalInformation", "approximation": false, "readable_label": null, "id": 1}]}]
+[
+  {
+    "version": 1,
+    "nodes": [
+      {
+        "col_index": 1,
+        "label": "name",
+        "id": 0
+      },
+      {
+        "abs_uri": "http://www.americanartcollaborative.org/ontology/Person",
+        "rel_uri": "http://www.americanartcollaborative.org/ontology/Person",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "col_index": 2,
+        "label": "biography",
+        "id": 2
+      }
+    ],
+    "edges": [
+      {
+        "source": 1,
+        "target": 0,
+        "abs_uri": "http://rdvocab.info/ElementsGr2/nameOfThePerson",
+        "rel_uri": "http://rdvocab.info/ElementsGr2/nameOfThePerson",
+        "approximation": false,
+        "readable_label": null,
+        "id": 0
+      },
+      {
+        "source": 1,
+        "target": 2,
+        "abs_uri": "http://rdvocab.info/ElementsGr2/biographicalInformation",
+        "rel_uri": "http://rdvocab.info/ElementsGr2/biographicalInformation",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      }
+    ]
+  }
+]

@@ -1,1 +1,72 @@
-[{"version": 1, "nodes": [{"col_index": 0, "label": "city", "id": 0}, {"abs_uri": "https://example.com/Column", "rel_uri": "https://example.com/Column", "approximation": false, "readable_label": null, "id": 1}, {"col_index": 1, "label": "street", "id": 2}, {"col_index": 2, "label": "zip", "id": 3}, {"col_index": 3, "label": "state", "id": 4}], "edges": [{"source": 1, "target": 0, "abs_uri": "https://example.com/city", "rel_uri": "https://example.com/city", "approximation": false, "readable_label": null, "id": 0}, {"source": 1, "target": 2, "abs_uri": "https://example.com/street", "rel_uri": "https://example.com/street", "approximation": false, "readable_label": null, "id": 1}, {"source": 1, "target": 3, "abs_uri": "https://example.com/zip", "rel_uri": "https://example.com/zip", "approximation": false, "readable_label": null, "id": 2}, {"source": 1, "target": 4, "abs_uri": "https://example.com/state", "rel_uri": "https://example.com/state", "approximation": false, "readable_label": null, "id": 3}]}]
+[
+  {
+    "version": 1,
+    "nodes": [
+      {
+        "col_index": 0,
+        "label": "city",
+        "id": 0
+      },
+      {
+        "abs_uri": "https://example.com/Column",
+        "rel_uri": "https://example.com/Column",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "col_index": 1,
+        "label": "street",
+        "id": 2
+      },
+      {
+        "col_index": 2,
+        "label": "zip",
+        "id": 3
+      },
+      {
+        "col_index": 3,
+        "label": "state",
+        "id": 4
+      }
+    ],
+    "edges": [
+      {
+        "source": 1,
+        "target": 0,
+        "abs_uri": "https://example.com/city",
+        "rel_uri": "https://example.com/city",
+        "approximation": false,
+        "readable_label": null,
+        "id": 0
+      },
+      {
+        "source": 1,
+        "target": 2,
+        "abs_uri": "https://example.com/street",
+        "rel_uri": "https://example.com/street",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "source": 1,
+        "target": 3,
+        "abs_uri": "https://example.com/zip",
+        "rel_uri": "https://example.com/zip",
+        "approximation": false,
+        "readable_label": null,
+        "id": 2
+      },
+      {
+        "source": 1,
+        "target": 4,
+        "abs_uri": "https://example.com/state",
+        "rel_uri": "https://example.com/state",
+        "approximation": false,
+        "readable_label": null,
+        "id": 3
+      }
+    ]
+  }
+]

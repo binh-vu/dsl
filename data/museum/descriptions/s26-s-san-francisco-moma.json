@@ -1,1 +1,247 @@
-[{"version": 1, "nodes": [{"col_index": 1, "label": "birthYear", "id": 0}, {"abs_uri": "http://erlangen-crm.org/current/E52_Time-Span", "rel_uri": "http://erlangen-crm.org/current/E52_Time-Span", "approximation": false, "readable_label": null, "id": 1}, {"col_index": 3, "label": "image-URL", "id": 2}, {"abs_uri": "http://erlangen-crm.org/current/E38_Image", "rel_uri": "http://erlangen-crm.org/current/E38_Image", "approximation": false, "readable_label": null, "id": 3}, {"col_index": 4, "label": "collection", "id": 4}, {"abs_uri": "http://erlangen-crm.org/current/E78_Collection", "rel_uri": "http://erlangen-crm.org/current/E78_Collection", "approximation": false, "readable_label": null, "id": 5}, {"col_index": 6, "label": "type", "id": 6}, {"abs_uri": "http://erlangen-crm.org/current/E55_Type", "rel_uri": "http://erlangen-crm.org/current/E55_Type", "approximation": false, "readable_label": null, "id": 7}, {"col_index": 7, "label": "url", "id": 8}, {"abs_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object", "rel_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object", "approximation": false, "readable_label": null, "id": 9}, {"col_index": 8, "label": "title", "id": 10}, {"abs_uri": "http://erlangen-crm.org/current/E35_Title", "rel_uri": "http://erlangen-crm.org/current/E35_Title", "approximation": false, "readable_label": null, "id": 11}, {"col_index": 9, "label": "nationality", "id": 12}, {"abs_uri": "http://erlangen-crm.org/current/E74_Group", "rel_uri": "http://erlangen-crm.org/current/E74_Group", "approximation": false, "readable_label": null, "id": 13}, {"col_index": 10, "label": "when-acquired", "id": 14}, {"col_index": 11, "label": "dimensions", "id": 15}, {"abs_uri": "http://erlangen-crm.org/current/E54_Dimension", "rel_uri": "http://erlangen-crm.org/current/E54_Dimension", "approximation": false, "readable_label": null, "id": 16}, {"col_index": 13, "label": "artistName", "id": 17}, {"abs_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation", "rel_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation", "approximation": false, "readable_label": null, "id": 18}, {"col_index": 14, "label": "credit", "id": 19}, {"abs_uri": "http://erlangen-crm.org/current/E8_Acquisition", "rel_uri": "http://erlangen-crm.org/current/E8_Acquisition", "approximation": false, "readable_label": null, "id": 20}, {"col_index": 18, "label": "deathYear", "id": 21}], "edges": [{"source": 1, "target": 0, "abs_uri": "http://erlangen-crm.org/current/P82_at_some_time_within", "rel_uri": "http://erlangen-crm.org/current/P82_at_some_time_within", "approximation": false, "readable_label": null, "id": 0}, {"source": 3, "target": 2, "abs_uri": "http://isi.edu/integration/karma/dev#classLink", "rel_uri": "http://isi.edu/integration/karma/dev#classLink", "approximation": false, "readable_label": null, "id": 1}, {"source": 5, "target": 4, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 2}, {"source": 7, "target": 6, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 3}, {"source": 9, "target": 8, "abs_uri": "http://isi.edu/integration/karma/dev#classLink", "rel_uri": "http://isi.edu/integration/karma/dev#classLink", "approximation": false, "readable_label": null, "id": 4}, {"source": 11, "target": 10, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 5}, {"source": 13, "target": 12, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 6}, {"source": 1, "target": 14, "abs_uri": "http://erlangen-crm.org/current/P82_at_some_time_within", "rel_uri": "http://erlangen-crm.org/current/P82_at_some_time_within", "approximation": false, "readable_label": null, "id": 7}, {"source": 16, "target": 15, "abs_uri": "http://erlangen-crm.org/current/P3_has_note", "rel_uri": "http://erlangen-crm.org/current/P3_has_note", "approximation": false, "readable_label": null, "id": 8}, {"source": 18, "target": 17, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 9}, {"source": 20, "target": 19, "abs_uri": "http://erlangen-crm.org/current/P3_has_note", "rel_uri": "http://erlangen-crm.org/current/P3_has_note", "approximation": false, "readable_label": null, "id": 10}, {"source": 1, "target": 21, "abs_uri": "http://erlangen-crm.org/current/P82_at_some_time_within", "rel_uri": "http://erlangen-crm.org/current/P82_at_some_time_within", "approximation": false, "readable_label": null, "id": 11}]}]
+[
+  {
+    "version": 1,
+    "nodes": [
+      {
+        "col_index": 1,
+        "label": "birthYear",
+        "id": 0
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E52_Time-Span",
+        "rel_uri": "http://erlangen-crm.org/current/E52_Time-Span",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "col_index": 3,
+        "label": "image-URL",
+        "id": 2
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E38_Image",
+        "rel_uri": "http://erlangen-crm.org/current/E38_Image",
+        "approximation": false,
+        "readable_label": null,
+        "id": 3
+      },
+      {
+        "col_index": 4,
+        "label": "collection",
+        "id": 4
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E78_Collection",
+        "rel_uri": "http://erlangen-crm.org/current/E78_Collection",
+        "approximation": false,
+        "readable_label": null,
+        "id": 5
+      },
+      {
+        "col_index": 6,
+        "label": "type",
+        "id": 6
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E55_Type",
+        "rel_uri": "http://erlangen-crm.org/current/E55_Type",
+        "approximation": false,
+        "readable_label": null,
+        "id": 7
+      },
+      {
+        "col_index": 7,
+        "label": "url",
+        "id": 8
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object",
+        "rel_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object",
+        "approximation": false,
+        "readable_label": null,
+        "id": 9
+      },
+      {
+        "col_index": 8,
+        "label": "title",
+        "id": 10
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E35_Title",
+        "rel_uri": "http://erlangen-crm.org/current/E35_Title",
+        "approximation": false,
+        "readable_label": null,
+        "id": 11
+      },
+      {
+        "col_index": 9,
+        "label": "nationality",
+        "id": 12
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E74_Group",
+        "rel_uri": "http://erlangen-crm.org/current/E74_Group",
+        "approximation": false,
+        "readable_label": null,
+        "id": 13
+      },
+      {
+        "col_index": 10,
+        "label": "when-acquired",
+        "id": 14
+      },
+      {
+        "col_index": 11,
+        "label": "dimensions",
+        "id": 15
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E54_Dimension",
+        "rel_uri": "http://erlangen-crm.org/current/E54_Dimension",
+        "approximation": false,
+        "readable_label": null,
+        "id": 16
+      },
+      {
+        "col_index": 13,
+        "label": "artistName",
+        "id": 17
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation",
+        "rel_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation",
+        "approximation": false,
+        "readable_label": null,
+        "id": 18
+      },
+      {
+        "col_index": 14,
+        "label": "credit",
+        "id": 19
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E8_Acquisition",
+        "rel_uri": "http://erlangen-crm.org/current/E8_Acquisition",
+        "approximation": false,
+        "readable_label": null,
+        "id": 20
+      },
+      {
+        "col_index": 18,
+        "label": "deathYear",
+        "id": 21
+      }
+    ],
+    "edges": [
+      {
+        "source": 1,
+        "target": 0,
+        "abs_uri": "http://erlangen-crm.org/current/P82_at_some_time_within",
+        "rel_uri": "http://erlangen-crm.org/current/P82_at_some_time_within",
+        "approximation": false,
+        "readable_label": null,
+        "id": 0
+      },
+      {
+        "source": 3,
+        "target": 2,
+        "abs_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "rel_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "source": 5,
+        "target": 4,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 2
+      },
+      {
+        "source": 7,
+        "target": 6,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 3
+      },
+      {
+        "source": 9,
+        "target": 8,
+        "abs_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "rel_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "approximation": false,
+        "readable_label": null,
+        "id": 4
+      },
+      {
+        "source": 11,
+        "target": 10,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 5
+      },
+      {
+        "source": 13,
+        "target": 12,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 6
+      },
+      {
+        "source": 1,
+        "target": 14,
+        "abs_uri": "http://erlangen-crm.org/current/P82_at_some_time_within",
+        "rel_uri": "http://erlangen-crm.org/current/P82_at_some_time_within",
+        "approximation": false,
+        "readable_label": null,
+        "id": 7
+      },
+      {
+        "source": 16,
+        "target": 15,
+        "abs_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "rel_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "approximation": false,
+        "readable_label": null,
+        "id": 8
+      },
+      {
+        "source": 18,
+        "target": 17,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 9
+      },
+      {
+        "source": 20,
+        "target": 19,
+        "abs_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "rel_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "approximation": false,
+        "readable_label": null,
+        "id": 10
+      },
+      {
+        "source": 1,
+        "target": 21,
+        "abs_uri": "http://erlangen-crm.org/current/P82_at_some_time_within",
+        "rel_uri": "http://erlangen-crm.org/current/P82_at_some_time_within",
+        "approximation": false,
+        "readable_label": null,
+        "id": 11
+      }
+    ]
+  }
+]

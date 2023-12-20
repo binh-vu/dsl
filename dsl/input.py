@@ -75,7 +75,10 @@ class DSLColumn:
         for val in col_values:
             type_stats[get_type(val)] += 1
         for key, val in type_stats.items():
-            type_stats[key] = val / size
+            if size == 0:
+                type_stats[key] = 0.0
+            else:
+                type_stats[key] = val / size
 
         type = guess_col_type(id, type_stats)
 

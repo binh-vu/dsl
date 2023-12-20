@@ -1,1 +1,72 @@
-[{"version": 1, "nodes": [{"col_index": 2, "label": "AUTHOR", "id": 0}, {"abs_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation", "rel_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation", "approximation": false, "readable_label": null, "id": 1}, {"col_index": 4, "label": "DESCRIPTION", "id": 2}, {"abs_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object", "rel_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object", "approximation": false, "readable_label": null, "id": 3}, {"col_index": 5, "label": "VIDEO", "id": 4}, {"abs_uri": "http://erlangen-crm.org/current/E31_Document", "rel_uri": "http://erlangen-crm.org/current/E31_Document", "approximation": false, "readable_label": null, "id": 5}], "edges": [{"source": 1, "target": 0, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 0}, {"source": 3, "target": 2, "abs_uri": "http://erlangen-crm.org/current/P3_has_note", "rel_uri": "http://erlangen-crm.org/current/P3_has_note", "approximation": false, "readable_label": null, "id": 1}, {"source": 5, "target": 4, "abs_uri": "http://isi.edu/integration/karma/dev#classLink", "rel_uri": "http://isi.edu/integration/karma/dev#classLink", "approximation": false, "readable_label": null, "id": 2}]}]
+[
+  {
+    "version": 1,
+    "nodes": [
+      {
+        "col_index": 2,
+        "label": "AUTHOR",
+        "id": 0
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation",
+        "rel_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "col_index": 4,
+        "label": "DESCRIPTION",
+        "id": 2
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object",
+        "rel_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object",
+        "approximation": false,
+        "readable_label": null,
+        "id": 3
+      },
+      {
+        "col_index": 5,
+        "label": "VIDEO",
+        "id": 4
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E31_Document",
+        "rel_uri": "http://erlangen-crm.org/current/E31_Document",
+        "approximation": false,
+        "readable_label": null,
+        "id": 5
+      }
+    ],
+    "edges": [
+      {
+        "source": 1,
+        "target": 0,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 0
+      },
+      {
+        "source": 3,
+        "target": 2,
+        "abs_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "rel_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "source": 5,
+        "target": 4,
+        "abs_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "rel_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "approximation": false,
+        "readable_label": null,
+        "id": 2
+      }
+    ]
+  }
+]

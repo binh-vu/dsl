@@ -1,1 +1,30 @@
-[{"version": 1, "nodes": [{"col_index": 0, "label": "name", "id": 0}, {"abs_uri": "http://erlangen-crm.org/current/E78_Collection", "rel_uri": "http://erlangen-crm.org/current/E78_Collection", "approximation": false, "readable_label": null, "id": 1}], "edges": [{"source": 1, "target": 0, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 0}]}]
+[
+  {
+    "version": 1,
+    "nodes": [
+      {
+        "col_index": 0,
+        "label": "name",
+        "id": 0
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E78_Collection",
+        "rel_uri": "http://erlangen-crm.org/current/E78_Collection",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      }
+    ],
+    "edges": [
+      {
+        "source": 1,
+        "target": 0,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 0
+      }
+    ]
+  }
+]

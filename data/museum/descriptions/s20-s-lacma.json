@@ -1,1 +1,93 @@
-[{"version": 1, "nodes": [{"col_index": 1, "label": "Artist_Name", "id": 0}, {"abs_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation", "rel_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation", "approximation": false, "readable_label": null, "id": 1}, {"col_index": 4, "label": "Artwork_Details", "id": 2}, {"abs_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object", "rel_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object", "approximation": false, "readable_label": null, "id": 3}, {"col_index": 6, "label": "Artwork_in_Focus", "id": 4}, {"abs_uri": "http://erlangen-crm.org/current/E21_Person", "rel_uri": "http://erlangen-crm.org/current/E21_Person", "approximation": false, "readable_label": null, "id": 5}, {"col_index": 11, "label": "Image_URL", "id": 6}, {"abs_uri": "http://erlangen-crm.org/current/E38_Image", "rel_uri": "http://erlangen-crm.org/current/E38_Image", "approximation": false, "readable_label": null, "id": 7}], "edges": [{"source": 1, "target": 0, "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label", "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label", "approximation": false, "readable_label": null, "id": 0}, {"source": 3, "target": 2, "abs_uri": "http://erlangen-crm.org/current/P3_has_note", "rel_uri": "http://erlangen-crm.org/current/P3_has_note", "approximation": false, "readable_label": null, "id": 1}, {"source": 5, "target": 4, "abs_uri": "http://erlangen-crm.org/current/P3_has_note", "rel_uri": "http://erlangen-crm.org/current/P3_has_note", "approximation": false, "readable_label": null, "id": 2}, {"source": 7, "target": 6, "abs_uri": "http://isi.edu/integration/karma/dev#classLink", "rel_uri": "http://isi.edu/integration/karma/dev#classLink", "approximation": false, "readable_label": null, "id": 3}]}]
+[
+  {
+    "version": 1,
+    "nodes": [
+      {
+        "col_index": 1,
+        "label": "Artist_Name",
+        "id": 0
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation",
+        "rel_uri": "http://erlangen-crm.org/current/E82_Actor_Appellation",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "col_index": 4,
+        "label": "Artwork_Details",
+        "id": 2
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object",
+        "rel_uri": "http://erlangen-crm.org/current/E22_Man-Made_Object",
+        "approximation": false,
+        "readable_label": null,
+        "id": 3
+      },
+      {
+        "col_index": 6,
+        "label": "Artwork_in_Focus",
+        "id": 4
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E21_Person",
+        "rel_uri": "http://erlangen-crm.org/current/E21_Person",
+        "approximation": false,
+        "readable_label": null,
+        "id": 5
+      },
+      {
+        "col_index": 11,
+        "label": "Image_URL",
+        "id": 6
+      },
+      {
+        "abs_uri": "http://erlangen-crm.org/current/E38_Image",
+        "rel_uri": "http://erlangen-crm.org/current/E38_Image",
+        "approximation": false,
+        "readable_label": null,
+        "id": 7
+      }
+    ],
+    "edges": [
+      {
+        "source": 1,
+        "target": 0,
+        "abs_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "rel_uri": "http://www.w3.org/2000/01/rdf-schema#label",
+        "approximation": false,
+        "readable_label": null,
+        "id": 0
+      },
+      {
+        "source": 3,
+        "target": 2,
+        "abs_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "rel_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "source": 5,
+        "target": 4,
+        "abs_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "rel_uri": "http://erlangen-crm.org/current/P3_has_note",
+        "approximation": false,
+        "readable_label": null,
+        "id": 2
+      },
+      {
+        "source": 7,
+        "target": 6,
+        "abs_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "rel_uri": "http://isi.edu/integration/karma/dev#classLink",
+        "approximation": false,
+        "readable_label": null,
+        "id": 3
+      }
+    ]
+  }
+]

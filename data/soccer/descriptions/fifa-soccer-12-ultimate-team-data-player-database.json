@@ -1,1 +1,72 @@
-[{"version": 1, "nodes": [{"col_index": 1, "label": "name", "id": 0}, {"abs_uri": "http://schema.org/Player", "rel_uri": "http://schema.org/Player", "approximation": false, "readable_label": null, "id": 1}, {"col_index": 3, "label": "position", "id": 2}, {"col_index": 4, "label": "height", "id": 3}, {"col_index": 5, "label": "foot", "id": 4}], "edges": [{"source": 1, "target": 0, "abs_uri": "http://schema.org/name", "rel_uri": "http://schema.org/name", "approximation": false, "readable_label": null, "id": 0}, {"source": 1, "target": 2, "abs_uri": "http://schema.org/playPosition", "rel_uri": "http://schema.org/playPosition", "approximation": false, "readable_label": null, "id": 1}, {"source": 1, "target": 3, "abs_uri": "http://schema.org/height", "rel_uri": "http://schema.org/height", "approximation": false, "readable_label": null, "id": 2}, {"source": 1, "target": 4, "abs_uri": "http://schema.org/strongFoot", "rel_uri": "http://schema.org/strongFoot", "approximation": false, "readable_label": null, "id": 3}]}]
+[
+  {
+    "version": 1,
+    "nodes": [
+      {
+        "col_index": 1,
+        "label": "name",
+        "id": 0
+      },
+      {
+        "abs_uri": "http://schema.org/Player",
+        "rel_uri": "http://schema.org/Player",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "col_index": 3,
+        "label": "position",
+        "id": 2
+      },
+      {
+        "col_index": 4,
+        "label": "height",
+        "id": 3
+      },
+      {
+        "col_index": 5,
+        "label": "foot",
+        "id": 4
+      }
+    ],
+    "edges": [
+      {
+        "source": 1,
+        "target": 0,
+        "abs_uri": "http://schema.org/name",
+        "rel_uri": "http://schema.org/name",
+        "approximation": false,
+        "readable_label": null,
+        "id": 0
+      },
+      {
+        "source": 1,
+        "target": 2,
+        "abs_uri": "http://schema.org/playPosition",
+        "rel_uri": "http://schema.org/playPosition",
+        "approximation": false,
+        "readable_label": null,
+        "id": 1
+      },
+      {
+        "source": 1,
+        "target": 3,
+        "abs_uri": "http://schema.org/height",
+        "rel_uri": "http://schema.org/height",
+        "approximation": false,
+        "readable_label": null,
+        "id": 2
+      },
+      {
+        "source": 1,
+        "target": 4,
+        "abs_uri": "http://schema.org/strongFoot",
+        "rel_uri": "http://schema.org/strongFoot",
+        "approximation": false,
+        "readable_label": null,
+        "id": 3
+      }
+    ]
+  }
+]
