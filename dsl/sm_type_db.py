@@ -7,16 +7,16 @@ from functools import lru_cache
 from typing import Mapping, Optional, Sequence
 
 import numpy
-from tqdm.auto import tqdm
-
-from dsl.config import DSLConfig
-from dsl.feature_extraction.column_base import column_name, numeric, textual
-from dsl.input import DSLColumn, DSLSemanticType, DSLTable
 from kgdata.models.ont_class import OntologyClass
 from kgdata.models.ont_property import OntologyProperty
 from sm.dataset import Example, FullTable, sample_table_data
 from sm.misc.ray_helper import ray_map, ray_put
 from sm.outputs.semantic_model import SemanticType
+from tqdm.auto import tqdm
+
+from dsl.config import DSLConfig
+from dsl.feature_extraction.column_base import column_name, numeric, textual
+from dsl.input import DSLColumn, DSLSemanticType, DSLTable
 
 
 class SemanticTypeDB(object):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional
@@ -9,7 +10,6 @@ import fastnumbers
 import ftfy
 import orjson
 from loguru import logger
-
 from sm.dataset import FullTable
 from sm.inputs.table import ColumnBasedTable
 from sm.outputs.semantic_model import SemanticType
@@ -56,9 +56,18 @@ class DSLColumn:
     str_idx_array: list[int]
 
     @staticmethod
-    def from_table_column(table: ColumnBasedTable, col_index: int):
+    def from_table_column(
+        table: ColumnBasedTable, col_index: int, original_preprocessing: bool = False
+    ):
         col = table.columns[col_index]
-        col_values = [norm_val(val, empty_as_null=True) for val in col.values]
+        col_values = [
+            norm_val(
+                val,
+                empty_as_null=True,
+                replace_not_allowed_chars=original_preprocessing,
+            )
+            for val in col.values
+        ]
         id = f"{table.table_id}:{col_index}:{col.clean_multiline_name}"
         size = len(col.values)
 
@@ -80,6 +89,13 @@ class DSLColumn:
                 if isinstance(val, (int, float)):
                     num_array.append(val)
                     num_idx_array.append(idx)
+                elif original_preprocessing:
+                    nums, val = split_number_text_fn(val)
+                    for num in nums:
+                        num_array.append(float(num))
+                        num_idx_array.append(idx)
+                    str_array.append(val)
+                    str_idx_array.append(idx)
                 else:
                     str_array.append(val)
                     str_idx_array.append(idx)
@@ -155,7 +171,9 @@ class ColumnType(str, Enum):
         return self == ColumnType.NUMBER or self == ColumnType.DATETIME
 
 
-def norm_val(val: Any, empty_as_null: bool) -> Optional[str | int | float]:
+def norm_val(
+    val: Any, empty_as_null: bool, replace_not_allowed_chars: bool
+) -> Optional[str | int | float]:
     """Normalize a value"""
     if val is None:
         return None
@@ -167,6 +185,8 @@ def norm_val(val: Any, empty_as_null: bool) -> Optional[str | int | float]:
         return val
 
     if isinstance(val, str):
+        if replace_not_allowed_chars:
+            val = re.sub(not_allowed_chars, " ", val)
         val = ftfy.fix_text(val).replace("\xa0", " ").strip()
         if len(val) == 0 and empty_as_null:
             return None
@@ -209,3 +229,12 @@ def guess_col_type(col_id: str, type_stats: dict[ColumnType, float]) -> ColumnTy
         orjson.dumps(type_stats, option=orjson.OPT_INDENT_2),
     )
     raise Exception(f"Cannot decide type of column: {col_id}")
+
+
+not_allowed_chars = '[\/*?"<>|\s\t]'
+
+
+def split_number_text_fn(example):
+    numbers = re.findall(r"(\d+(\.\d+([Ee]\d+)?)?)", example)
+    text = re.sub(r"(\d+(\.\d+([Ee]\d+)?)?)", "", example)
+    return numbers, text
