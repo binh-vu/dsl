@@ -9,12 +9,16 @@ from typing import Mapping, Optional, Protocol, Sequence
 
 import numpy as np
 import pandas as pd
+import serde.pickle
+from kgdata.models.ont_class import OntologyClass
+from kgdata.models.ont_property import OntologyProperty
 from loguru import logger
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
+from sm.dataset import Example, sample_table_data
+from sm.outputs.semantic_model import SemanticType
 from tqdm.auto import tqdm
 
-import serde.pickle
 from dsl.config import DSLConfig
 from dsl.generate_train_data import (
     DefaultSemanticTypeComparator,
@@ -23,10 +27,6 @@ from dsl.generate_train_data import (
 )
 from dsl.input import DSLTable
 from dsl.sm_type_db import SemanticTypeDB
-from kgdata.models.ont_class import OntologyClass
-from kgdata.models.ont_property import OntologyProperty
-from sm.dataset import Example, sample_table_data
-from sm.outputs.semantic_model import SemanticType
 
 
 class DSLModel(Protocol):

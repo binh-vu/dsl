@@ -22,11 +22,14 @@ class DSLTable:
 
     @staticmethod
     def from_full_table(table: FullTable) -> DSLTable:
+        return DSLTable.from_column_based_table(table.table)
+
+    @staticmethod
+    def from_column_based_table(table: ColumnBasedTable) -> DSLTable:
         return DSLTable(
-            table=table.table,
+            table=table,
             columns=[
-                DSLColumn.from_table_column(table.table, col.index)
-                for col in table.table.columns
+                DSLColumn.from_table_column(table, col.index) for col in table.columns
             ],
         )
 
@@ -220,7 +223,7 @@ def guess_col_type(col_id: str, type_stats: dict[ColumnType, float]) -> ColumnTy
 
     if (
         type_stats[ColumnType.NUMBER] > type_stats[ColumnType.STRING]
-        and (type_stats[ColumnType.NUMBER] + type_stats[ColumnType.NULL]) > 0.9
+        and (type_stats[ColumnType.NUMBER] + type_stats[ColumnType.NULL]) >= 0.9
     ):
         return ColumnType.NUMBER
 
@@ -229,7 +232,7 @@ def guess_col_type(col_id: str, type_stats: dict[ColumnType, float]) -> ColumnTy
 
     logger.error(
         "Cannot decide type with the stats: {}",
-        orjson.dumps(type_stats, option=orjson.OPT_INDENT_2),
+        orjson.dumps(type_stats, option=orjson.OPT_INDENT_2 | orjson.OPT_NON_STR_KEYS),
     )
     raise Exception(f"Cannot decide type of column: {col_id}")
 
