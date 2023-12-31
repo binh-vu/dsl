@@ -62,7 +62,7 @@ class DSLColumn:
     def from_table_column(
         table: ColumnBasedTable, col_index: int, original_preprocessing: bool = False
     ):
-        col = table.columns[col_index]
+        col = table.get_column_by_index(col_index)
         col_values = [
             norm_val(
                 val,
