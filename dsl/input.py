@@ -231,10 +231,10 @@ def guess_col_type(col_id: str, type_stats: dict[ColumnType, float]) -> ColumnTy
         return ColumnType.NULL
 
     logger.error(
-        "Cannot decide type with the stats: {}",
+        "Cannot decide type with the stats: {}. Select the most frequent type.",
         orjson.dumps(type_stats, option=orjson.OPT_INDENT_2 | orjson.OPT_NON_STR_KEYS),
     )
-    raise Exception(f"Cannot decide type of column: {col_id}")
+    return max(type_stats.keys(), key=lambda k: type_stats[k])
 
 
 not_allowed_chars = '[\/*?"<>|\s\t]'
