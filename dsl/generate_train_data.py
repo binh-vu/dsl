@@ -5,11 +5,13 @@
 from abc import ABC, abstractmethod
 from typing import Mapping
 
-from dsl.input import DSLColumn
-from dsl.sm_type_db import SemanticTypeDB
 from kgdata.models.ont_class import OntologyClass
 from kgdata.models.ont_property import OntologyProperty
 from sm.outputs.semantic_model import SemanticType
+
+from dsl.input import DSLColumn
+from dsl.sm_type_db import SemanticTypeDB
+from dsl.sm_type_db_v2 import SemanticTypeDBV2
 
 
 class ISemanticTypeComparator(ABC):
@@ -53,6 +55,24 @@ class DefaultSemanticTypeComparator(ISemanticTypeComparator):
 
 
 def generate_training_data(
+    stype_db: SemanticTypeDB | SemanticTypeDBV2,
+    stype_cmp: ISemanticTypeComparator,
+    testsets: dict[str, list[tuple[DSLColumn, SemanticType]]],
+    include_traceback: bool,
+):
+    if isinstance(stype_db, SemanticTypeDB):
+        return generate_training_data_v1(
+            stype_db, stype_cmp, testsets, include_traceback
+        )
+    elif isinstance(stype_db, SemanticTypeDBV2):
+        return generate_training_data_v2(
+            stype_db, stype_cmp, testsets, include_traceback
+        )
+    else:
+        raise Exception("Unknown SemanticTypeDB type")
+
+
+def generate_training_data_v1(
     stype_db: SemanticTypeDB,
     stype_cmp: ISemanticTypeComparator,
     testsets: dict[str, list[tuple[DSLColumn, SemanticType]]],
@@ -100,6 +120,67 @@ def generate_training_data(
 
                 if include_traceback:
                     xy_test["refcol"].append(ref_col.id)
+                    xy_test["col"].append(col.id)
+
+    if len(trainset) == 0:
+        raise Exception("No training data")
+
+    return trainset, testset_output
+
+
+def generate_training_data_v2(
+    stype_db: SemanticTypeDBV2,
+    stype_cmp: ISemanticTypeComparator,
+    testsets: dict[str, list[tuple[DSLColumn, SemanticType]]],
+    include_traceback: bool,
+) -> tuple[dict, dict[str, dict]]:
+    trainset = {"x": [], "y": [], "refcol": [], "col": []}
+
+    traincols = [col for groupcol in stype_db.train_columns for col in groupcol.cols]
+
+    train_sim_matrix = stype_db.get_similarity_matrix(
+        traincols,
+        verbose=True,
+    )
+
+    testset_output = {
+        test_name: {"x": [], "y": [], "relcol": [], "col": []}
+        for test_name in testsets.keys()
+    }
+    testset_matrix = {
+        test_name: stype_db.get_similarity_matrix(
+            [xy[0] for xy in test_columns], verbose=True
+        )
+        for test_name, test_columns in testsets.items()
+    }
+
+    for i, refgroup in enumerate(stype_db.train_columns):
+        for j, col in enumerate(traincols):
+            if i == j:
+                continue
+            trainset["x"].append(train_sim_matrix[j, i])
+            trainset["y"].append(
+                stype_cmp(
+                    stype_db.col2types[refgroup.cols[0].id], stype_db.col2types[col.id]
+                )
+            )
+
+            if include_traceback:
+                trainset["refcol"].append([col.id for col in refgroup.cols])
+                trainset["col"].append(col.id)
+
+        for test_name, test_columns in testsets.items():
+            xy_test = testset_output[test_name]
+            test_sim_matrix = testset_matrix[test_name]
+
+            for j, (col, col_stype) in enumerate(test_columns):
+                xy_test["x"].append(test_sim_matrix[j, i])
+                xy_test["y"].append(
+                    stype_cmp(stype_db.col2types[refgroup.cols[0].id], col_stype)
+                )
+
+                if include_traceback:
+                    xy_test["refcol"].append(refgroup.cols[0].id)
                     xy_test["col"].append(col.id)
 
     if len(trainset) == 0:

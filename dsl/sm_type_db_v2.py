@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from dataclasses import dataclass
 from typing import Mapping, Optional, Sequence
 
 import numpy
@@ -14,10 +15,15 @@ from sm.outputs.semantic_model import SemanticType
 from tqdm.auto import tqdm
 
 from dsl.feature_extraction.column_base import column_name, numeric, textual
-from dsl.input import DSLColumn, DSLSemanticType, DSLTable
+from dsl.input import ColumnType, DSLColumn, DSLSemanticType, DSLTable
 
 
-class SemanticTypeDB(object):
+@dataclass
+class DSLColumnGroup:
+    cols: list[DSLColumn]
+
+
+class SemanticTypeDBV2(object):
     SIMILARITY_METRICS = [
         "label_jaccard",
         "stype_jaccard",
@@ -26,6 +32,10 @@ class SemanticTypeDB(object):
         "num_jaccard",
         "text_jaccard",
         "text_tf-idf",
+        "type_num",
+        "type_str",
+        # "type_datetime",
+        # "type_null",
     ]
     instance = None
 
@@ -36,7 +46,8 @@ class SemanticTypeDB(object):
         props: Mapping[str, OntologyProperty],
     ):
         self.train_examples: Sequence[Example[DSLTable]] = train_examples
-        self.train_columns: list[DSLColumn] = []
+        self.train_columns: list[DSLColumnGroup] = []
+        self.type2metacol: dict[SemanticType, int] = {}
         self.col2types: dict[str, SemanticType] = {}
 
         for ex in self.train_examples:
@@ -56,9 +67,13 @@ class SemanticTypeDB(object):
 
                 assert col_id not in self.col2types, "column id must be unique"
                 self.col2types[col_id] = list(stypes)[0]
-                self.train_columns.append(ex.table.columns[ci])
+                if self.col2types[col_id] not in self.type2metacol:
+                    self.type2metacol[self.col2types[col_id]] = len(self.train_columns)
+                    self.train_columns.append(DSLColumnGroup([]))
+                self.train_columns[
+                    self.type2metacol[self.col2types[col_id]]
+                ].cols.append(ex.table.columns[ci])
 
-        self.col2idx = {col.id: idx for idx, col in enumerate(self.train_columns)}
         self.train_column_stypes = [
             DSLSemanticType(
                 stype,
@@ -66,12 +81,14 @@ class SemanticTypeDB(object):
                 + " | "
                 + props[stype.predicate_abs_uri].label,
             )
-            for stype in (self.col2types[col.id] for col in self.train_columns)
+            for stype in (
+                self.col2types[groupcol.cols[0].id] for groupcol in self.train_columns
+            )
         ]
 
         self.tfidf_db = TfidfDatabase.create(
             textual.get_tokenizer(),
-            self.train_columns,
+            [col for groupcol in self.train_columns for col in groupcol.cols],
         )
 
     def get_similarity_matrix(
@@ -106,22 +123,28 @@ class SemanticTypeDB(object):
     def _compute_feature_vectors(
         self,
         col: DSLColumn,
-        refcols: list[DSLColumn],
-        refcol_stypes: list[DSLSemanticType],
+        refgroups: list[DSLColumnGroup],
+        refgroup_stypes: list[DSLSemanticType],
     ):
-        ref_tfidfs = self.tfidf_db.compute_tfidf(refcols)
+        ref_tfidfs = [
+            self.tfidf_db.compute_tfidf(refgroup.cols) for refgroup in refgroups
+        ]
         col_tfidf = self.tfidf_db.compute_tfidf([col])[0]
 
         features = []
-        for i, refcol in enumerate(refcols):
-            features.append(
+        for i, refgroup in enumerate(refgroups):
+            refcols = [refcol for refcol in refgroup.cols if col.id != refcol.id]
+            if len(refcols) == 0:
+                refcols = refgroup.cols
+
+            group_feats = [
                 [
                     # name features
                     column_name.jaccard_sim_test(
                         refcol.col_name, col.col_name, lower=True
                     ),
                     column_name.jaccard_sim_test(
-                        refcol_stypes[i].label, col.col_name, lower=True
+                        refgroup_stypes[i].label, col.col_name, lower=True
                     ),
                     # numeric features
                     numeric.ks_test(refcol, col),
@@ -130,9 +153,38 @@ class SemanticTypeDB(object):
                     # text features
                     textual.jaccard_sim_test(refcol, col),
                     textual.cosine_similarity(
-                        ref_tfidfs[i],
+                        ref_tfidfs[i][j],
                         col_tfidf,
                     ),
+                    #
+                    1
+                    - abs(
+                        col.type_stats.get(ColumnType.NUMBER, 0.0)
+                        - refcol.type_stats.get(ColumnType.NUMBER, 0.0)
+                    ),
+                    1
+                    - abs(
+                        col.type_stats.get(ColumnType.STRING, 0.0)
+                        - refcol.type_stats.get(ColumnType.STRING, 0.0)
+                    ),
+                    # 1
+                    # - abs(
+                    #     col.type_stats.get(ColumnType.DATETIME, 0.0)
+                    #     - refcol.type_stats.get(ColumnType.DATETIME, 0.0)
+                    # ),
+                    # 1
+                    # - abs(
+                    #     col.type_stats.get(ColumnType.NULL, 0.0)
+                    #     - refcol.type_stats.get(ColumnType.NULL, 0.0)
+                    # ),
+                ]
+                for j, refcol in enumerate(refcols)
+            ]
+
+            features.append(
+                [
+                    max([group_feats[i][j] for i in range(len(group_feats))])
+                    for j in range(len(group_feats[0]))
                 ]
             )
 
@@ -186,9 +238,11 @@ class TfidfDatabase(object):
             self.cache_col2tfidf.update(unk_out)
 
         return [
-            self.cache_col2tfidf[col.id]
-            if col.id in self.cache_col2tfidf
-            else unk_out[col.id]
+            (
+                self.cache_col2tfidf[col.id]
+                if col.id in self.cache_col2tfidf
+                else unk_out[col.id]
+            )
             for col in cols
         ]
 
