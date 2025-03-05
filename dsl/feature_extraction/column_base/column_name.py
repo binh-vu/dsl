@@ -21,7 +21,7 @@ def jaccard_sim_test(col1_name: str, col2_name: str, lower: bool = False) -> flo
 
 
 camel_reg = re.compile(r".+?(?:(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z0-9])|$)")
-split_reg = re.compile(r"_| |:|\.")
+split_reg = re.compile(r"_| |:|\.|/|\(|\)")
 
 
 def tokenize_label(lbl: str) -> list[str]:
@@ -31,3 +31,8 @@ def tokenize_label(lbl: str) -> list[str]:
             result.append(match.group(0))
 
     return result
+
+
+if __name__ == "__main__":
+    print(jaccard_sim_test("State/Province", "State/ Province"))
+    print(jaccard_sim_test("Grade (%)", "Grade %"))

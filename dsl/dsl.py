@@ -14,6 +14,7 @@ from kgdata.models.ont_class import OntologyClass
 from kgdata.models.ont_property import OntologyProperty
 from loguru import logger
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sm.dataset import Example, sample_table_data
 from sm.outputs.semantic_model import SemanticType
@@ -27,6 +28,7 @@ from dsl.generate_train_data import (
 )
 from dsl.input import DSLTable
 from dsl.sm_type_db import SemanticTypeDB
+from dsl.sm_type_db_v2 import SemanticTypeDBV2
 
 
 class DSLModel(Protocol):
@@ -58,11 +60,14 @@ class DSL(object):
         exec_dir: Path,
         classes: Mapping[str, OntologyClass],
         props: Mapping[str, OntologyProperty],
+        model_name: str = "random-forest-200",
+        semtype_db: type[SemanticTypeDB | SemanticTypeDBV2] = SemanticTypeDB,
     ) -> None:
         self.train_source_ids = {ex.id for ex in train_examples}
         self.exec_dir = exec_dir
         self.exec_dir.mkdir(exist_ok=True, parents=True)
 
+        self.model_name = model_name
         self.model: Optional[DSLModel] = None
         self.classes = classes
         self.props = props
@@ -70,7 +75,7 @@ class DSL(object):
         if (exec_dir / "stype_db.pkl").exists():
             self.stype_db = serde.pickle.deser(exec_dir / "stype_db.pkl")
         else:
-            self.stype_db = SemanticTypeDB(train_examples, classes, props)
+            self.stype_db = semtype_db(train_examples, classes, props)
 
     def get_model(
         self,
@@ -82,7 +87,7 @@ class DSL(object):
         if self.model is not None:
             return self.model
 
-        model_file = self.exec_dir / "model.pkl"
+        model_file = self.get_model_file()
         if model_file.exists():
             logger.debug("Load previous trained model...")
             model: DSLModel = serde.pickle.deser(model_file)
@@ -97,6 +102,9 @@ class DSL(object):
         logger.error("Cannot load model...")
         raise Exception("Model doesn't exist..")
 
+    def get_model_file(self):
+        return self.exec_dir / f"{self.model_name}-model.pkl"
+
     def train_model(
         self,
         stype_cmp: Optional[ISemanticTypeComparator] = None,
@@ -109,10 +117,17 @@ class DSL(object):
             self.stype_db, stype_cmp, {}, include_traceback=save_train_data
         )
 
-        # clf = LogisticRegression(class_weight="balanced")
-        clf = RandomForestClassifier(
-            n_estimators=200, max_depth=10, class_weight="balanced", random_state=120
-        )
+        if self.model_name == "logistic-regression":
+            clf = LogisticRegression(class_weight="balanced")
+        elif self.model_name.startswith("random-forest-"):
+            clf = RandomForestClassifier(
+                n_estimators=int(self.model_name[len("random-forest-") :]),
+                max_depth=10,
+                class_weight="balanced",
+                random_state=120,
+            )
+        else:
+            raise Exception(f"Unknown model name: {self.model_name}")
 
         clf = clf.fit(trainset["x"], trainset["y"])
 
@@ -179,21 +194,37 @@ class DSL(object):
         similarity_matrix: np.ndarray,
     ) -> list[DSLPrediction]:
         X = []
-        refcols = [
-            refcol
-            for refcol in self.stype_db.train_columns
-            if refcol.id != target_col_id
-        ]
-        for refcol in refcols:
-            iref = self.stype_db.col2idx[refcol.id]
-            X.append(similarity_matrix[target_col_index, iref])
+        if isinstance(self.stype_db, SemanticTypeDB):
+            refcols = [
+                refcol
+                for refcol in self.stype_db.train_columns
+                if refcol.id != target_col_id
+            ]
+            for refcol in refcols:
+                iref = self.stype_db.col2idx[refcol.id]
+                X.append(similarity_matrix[target_col_index, iref])
 
-        result = self.get_model().predict_proba(X)[:, 1]
-        result = sorted(
-            zip(result, (self.stype_db.col2types[rc.id] for rc in refcols)),
-            key=lambda x: x[0],
-            reverse=True,
-        )
+            result = self.get_model().predict_proba(X)[:, 1]
+            result = sorted(
+                zip(result, (self.stype_db.col2types[rc.id] for rc in refcols)),
+                key=lambda x: x[0],
+                reverse=True,
+            )
+        elif isinstance(self.stype_db, SemanticTypeDBV2):
+            X = similarity_matrix[target_col_index, :]
+            result = self.get_model().predict_proba(X)[:, 1]
+            result = sorted(
+                zip(
+                    result,
+                    (
+                        self.stype_db.col2types[refgroup.cols[0].id]
+                        for refgroup in self.stype_db.train_columns
+                    ),
+                ),
+                key=lambda x: x[0],
+                reverse=True,
+            )
+
         top_k_st = {}
         for score, stype in result:
             if stype not in top_k_st:
